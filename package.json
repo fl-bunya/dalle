@@ -1,10 +1,10 @@
 {
-  "name": "bolt-js-getting-started-app",
+  "name": "dalle",
   "version": "2.0.0",
-  "description": "Getting Started ⚡️ Bolt for JavaScript",
-  "main": "app.js",
+  "description": "Slack bot that generates images from text using OpenAI's DALL-E",
+  "main": ".src/app.js",
   "scripts": {
-    "start": "node app.js",
+    "start": "node .src/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "license": "MIT",
