@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { App, AwsLambdaReceiver } = require('@slack/bolt');
 const { dalle } = require('./dalle');
+const { summarize } = require('./summarize');
 
 // Initialize your custom receiver
 const awsLambdaReceiver = new AwsLambdaReceiver({
@@ -19,24 +20,37 @@ module.exports.handler = async (event, context, callback) => {
   return handler(event, context, callback);
 }
 
+const hasUrl = (text) => (typeof text == 'string') && text.match(/https?:\/\/[^\s]+/);
 
 // Listen for direct messages
 app.message(async ({ message, say }) => {
   try {
     if (message.channel_type !== 'im' || message.bot_id) return;
     const { text: prompt, user, channel } = message;
-    await dalle(say, prompt, user, channel);
+    if (!prompt) return;
+    if (hasUrl(prompt)) {
+      await summarize(say, prompt, user, channel);
+    } else {
+      await dalle(say, prompt, user, channel);
+    }
   } catch (error) {
     console.error('Error:', error);
-    await say(`Sorry, an error occurred: ${error.message}`);
+    await say({
+      text: `Sorry, an error occurred: ${error.message}`
+    });
   }
 });
 
 app.event('app_mention', async ({ event, say }) => {
   try {
     const prompt = event.text.replace(/<@.*>/, '').trim();
+    if (!prompt) return;
     const { user, channel, ts: thread_ts } = event;
-    await dalle(say, prompt, user, channel, thread_ts);
+    if (hasUrl(prompt)) {
+      await summarize(say, prompt, user, channel, thread_ts);
+    } else {
+      await dalle(say, prompt, user, channel, thread_ts);
+    }
   } catch (error) {
     console.error('Error:', error);
     await say({
