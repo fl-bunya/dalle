@@ -1,0 +1,5 @@
+# node / npm
+node_modules/
+.github
+.serverless/
+.env
