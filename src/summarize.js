@@ -3,6 +3,14 @@ const OpenAI = require('openai');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
+// 自動検知の対象チャンネル
+exports.CHANNELS = [
+  'C051TTKV5L1', // #ai
+  'C05RWMBNKCP', // #architecture
+  'C024X97CVV2', // #news
+  // 'C03C0NHJBC0', // #test
+];
+
 const fetchSummaryByAI = async (prompt) => {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -16,7 +24,7 @@ const fetchSummaryByAI = async (prompt) => {
   return data;
 }
 
-const fetchTranlatedTextByAI = async (prompt) => {
+const fetchTranslatedTextByAI = async (prompt) => {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
@@ -31,11 +39,19 @@ const fetchTranlatedTextByAI = async (prompt) => {
 
 async function fetchAndExtractArticle(url) {
   try {
-    const { data } = await axios.get(url);
+    const HEADERS = {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ' +
+          'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en, ja'
+      }
+    };
+    const { data } = await axios.get(url, HEADERS);
     const $ = cheerio.load(data);
-    const title = $('title').text();
+    const title = $('title').text().trim();
     // if article exists, return it
-    const article = $('article').text();
+    const article = $('article').text().trim();
     if (article) {
       return {
         title,
@@ -78,9 +94,16 @@ exports.summarize = async function(say, prompt, user, channel, thread_ts = null)
       const summary = await fetchSummaryByAI(article);
       const translatedSummary = containsMultibyte(summary)
         ? ''
-        : '\n *翻訳：* \n' + await fetchTranlatedTextByAI(summary);
+        : '\n *翻訳：* \n' + await fetchTranslatedTextByAI(summary);
       const mention = thread_ts ? `<@${user}>\n` : '';
-      const text = `${mention}*${title}*\n${url}\n${summary}${translatedSummary}`
+      const values = [
+        `${mention}`,
+        `*${title}*\n`,
+        `${url}\n`,
+        `${summary}`,
+        `${translatedSummary}`,
+      ]
+      const text = values.join('');
       await say({
         text,
         channel,
@@ -90,7 +113,15 @@ exports.summarize = async function(say, prompt, user, channel, thread_ts = null)
       });
     }
     for (const url of urls) {
-      await saySummary(url);
+      try {
+        await saySummary(url);
+      } catch (error) {
+        console.error('Error:', error);
+        await say({
+          text: `${url}\nSorry, an error occurred: ${error.message}`,
+          thread_ts,
+        });
+      }
     }
   } catch (error) {
     throw error;

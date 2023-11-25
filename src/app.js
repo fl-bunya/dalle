@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { App, AwsLambdaReceiver } = require('@slack/bolt');
 const { dalle } = require('./dalle');
-const { summarize } = require('./summarize');
+const { summarize, CHANNELS } = require('./summarize');
 
 // Initialize your custom receiver
 const awsLambdaReceiver = new AwsLambdaReceiver({
@@ -22,17 +22,23 @@ module.exports.handler = async (event, context, callback) => {
 
 const hasUrl = (text) => (typeof text == 'string') && text.match(/https?:\/\/[^\s]+/);
 
-// Listen for direct messages
+// 投稿検知
 app.message(async ({ message, say }) => {
   try {
-    if (message.channel_type !== 'im' || message.bot_id) return;
-    const { text: prompt, user, channel } = message;
+    const { text: prompt, user, channel, ts: thread_ts } = message;
     if (!prompt) return;
-    if (hasUrl(prompt)) {
-      await summarize(say, prompt, user, channel);
-    } else {
-      await dalle(say, prompt, user, channel);
+
+    // 特定チャンネルは自動で要約
+    if (CHANNELS.includes(channel) && hasUrl(prompt)) {
+      await summarize(say, prompt, user, channel, thread_ts);
+      return;
     }
+
+    // DM
+    if (message.channel_type !== 'im' || message.bot_id) return;
+    hasUrl(prompt)
+      ? await summarize(say, prompt, user, channel)
+      : await dalle(say, prompt, user, channel);
   } catch (error) {
     console.error('Error:', error);
     await say({
@@ -41,16 +47,15 @@ app.message(async ({ message, say }) => {
   }
 });
 
+// メンション
 app.event('app_mention', async ({ event, say }) => {
   try {
     const prompt = event.text.replace(/<@.*>/, '').trim();
     if (!prompt) return;
     const { user, channel, ts: thread_ts } = event;
-    if (hasUrl(prompt)) {
-      await summarize(say, prompt, user, channel, thread_ts);
-    } else {
-      await dalle(say, prompt, user, channel, thread_ts);
-    }
+    hasUrl(prompt)
+      ? await summarize(say, prompt, user, channel, thread_ts)
+      : await dalle(say, prompt, user, channel, thread_ts);
   } catch (error) {
     console.error('Error:', error);
     await say({
