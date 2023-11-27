@@ -27,6 +27,11 @@ exports.fetchArticleFromYoutube = async (url) => {
           title: he.decode(title),
           article: caption,
         };
+      } else {
+        return {
+          title: title ? he.decode(title) : 'No title found.',
+          article: 'No caption found.',
+        };
       }
     }
   } catch (error) {
