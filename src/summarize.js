@@ -2,13 +2,14 @@ require('dotenv').config();
 const OpenAI = require('openai');
 const axios = require('axios');
 const cheerio = require('cheerio');
+const { fetchArticleFromYoutube, isYoutubeUrl } = require('./youtube');
 
 // 自動検知の対象チャンネル
 exports.CHANNELS = [
   'C051TTKV5L1', // #ai
   'C05RWMBNKCP', // #architecture
   'C024X97CVV2', // #news
-  // 'C03C0NHJBC0', // #test
+  // 'C03C0NHJBC0', // #test文屋
 ];
 
 const fetchSummaryByAI = async (prompt) => {
@@ -82,6 +83,7 @@ exports.summarize = async function(say, prompt, user, channel, thread_ts = null)
       unfurl_links: false,
       unfurl_media: false,
     });
+
     const urlPattern = /<(https?:\/\/[^\s]+)>/g;
     const urls = Array.from(prompt.matchAll(urlPattern), m => m[1]);
     
@@ -90,7 +92,9 @@ exports.summarize = async function(say, prompt, user, channel, thread_ts = null)
     }
 
     const saySummary = async (url) => {
-      const { title, article } = await fetchAndExtractArticle(url);
+      const { title, article } = isYoutubeUrl(url)
+        ? await fetchArticleFromYoutube(url)
+        : await fetchAndExtractArticle(url);
       const summary = await fetchSummaryByAI(article);
       const translatedSummary = containsMultibyte(summary)
         ? ''

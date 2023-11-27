@@ -8,10 +8,12 @@ https://firstlogic.atlassian.net/wiki/spaces/~554843238/pages/1014857763/LT+Bolt
 npx serverless offline --noPrependStageInUrl
 ngrok http 3000
 ```
-Change Request URL in
-https://api.slack.com/apps/A05HCJCMC4Q/event-subscriptions
+Change Request URL in  
+https://api.slack.com/apps/A05HCJCMC4Q/event-subscriptions   
+like this  
+https://c1a9-118-0-46-208.ngrok-free.app/slack/events
 
-After debugging, change it back to
+After debugging, change it back to  
 https://3e4r345qyb.execute-api.ap-northeast-1.amazonaws.com/dev/slack/events
 
 ## release
