@@ -4,11 +4,18 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const { fetchArticleFromYoutube, isYoutubeUrl } = require('./youtube');
 
+// TODO: ハードコーディングをやめる
 // 自動検知の対象チャンネル
 exports.CHANNELS = [
-  'C051TTKV5L1', // #ai
-  'C05RWMBNKCP', // #architecture
-  'C024X97CVV2', // #news
+  'C051TTKV5L1', // #開発-ai
+  'C05RWMBNKCP', // #開発-アーキテクチャ
+  'C024X97CVV2', // #雑談-ニュース
+  // 'C03C0NHJBC0', // #test文屋
+];
+// RSS_CHANNELSはスレッド化せず要約する
+exports.RSS_CHANNELS = [
+  'C067M2VAEA0', // #rss-techblogs
+  'C067JKEE3R9', // #rss-techfeed
   // 'C03C0NHJBC0', // #test文屋
 ];
 
@@ -84,8 +91,8 @@ exports.summarize = async function(say, prompt, user, channel, thread_ts = null)
       unfurl_media: false,
     });
 
-    const urlPattern = /<(https?:\/\/[^\s]+)>/g;
-    const urls = Array.from(prompt.matchAll(urlPattern), m => m[1]);
+    const urlPattern = /<(https?:\/.+)>/g;
+    const urls = Array.from(prompt.matchAll(urlPattern), m => m[1].split('|')[0]);
     
     const containsMultibyte = (str) => {
       return str.match(/[^\x00-\x7F]/);

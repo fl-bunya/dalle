@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { App, AwsLambdaReceiver } = require('@slack/bolt');
 const { dalle } = require('./dalle');
-const { summarize, CHANNELS } = require('./summarize');
+const { summarize, CHANNELS, RSS_CHANNELS } = require('./summarize');
 
 // Initialize your custom receiver
 const awsLambdaReceiver = new AwsLambdaReceiver({
@@ -28,7 +28,13 @@ app.message(async ({ message, say }) => {
     const { text: prompt, user, channel, ts: thread_ts } = message;
     if (!prompt) return;
 
-    // 特定チャンネルは自動で要約
+    // 特定チャンネルは自動で要約（非スレッド化）
+    if (RSS_CHANNELS.includes(channel) && hasUrl(prompt)) {
+      await summarize(say, prompt, user, channel);
+      return;
+    }
+
+    // 特定チャンネルは自動で要約（スレッド化）
     if (CHANNELS.includes(channel) && hasUrl(prompt)) {
       await summarize(say, prompt, user, channel, thread_ts);
       return;
