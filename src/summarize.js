@@ -19,6 +19,13 @@ exports.RSS_CHANNELS = [
   // 'C03C0NHJBC0', // #test文屋
 ];
 
+// TODO: ハードコーディングをやめる
+IGNORE_DOMAINS = [
+  's02.company.talknote.com',
+  'fldev.slack.com',
+  'docs.google.com',
+];
+
 const fetchSummaryByAI = async (prompt) => {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -83,17 +90,31 @@ async function fetchAndExtractArticle(url) {
 
 exports.summarize = async function(say, prompt, user, channel, thread_ts = null) {
   try {
-    await say({
-      text: `Ok, I'll summarize ...`,
-      channel,
-      thread_ts,  // Reply in thread
-      unfurl_links: false,
-      unfurl_media: false,
-    });
+    const isDomainIgnored = (url) => {
+      const domain = new URL(url).hostname;
+      return IGNORE_DOMAINS.includes(domain);
+    };
+
+    const containsNonIgnoredDomain = (urls) => {
+      const test = urls.some(url => !isDomainIgnored(url));
+      return urls.some(url => !isDomainIgnored(url));
+    };
 
     const urlPattern = /<(https?:\/.+)>/g;
     const urls = Array.from(prompt.matchAll(urlPattern), m => m[1].split('|')[0]);
     
+    if (containsNonIgnoredDomain(urls)) {
+      await say({
+        text: `Ok, I'll summarize ...`,
+        channel,
+        thread_ts,  // Reply in thread
+        unfurl_links: false,
+        unfurl_media: false,
+      });
+    } else {
+      return;
+    }
+
     const containsMultibyte = (str) => {
       return str.match(/[^\x00-\x7F]/);
     }
@@ -125,6 +146,7 @@ exports.summarize = async function(say, prompt, user, channel, thread_ts = null)
     }
     for (const url of urls) {
       try {
+        if (isDomainIgnored(url)) continue;
         await saySummary(url);
       } catch (error) {
         console.error('Error:', error);

@@ -29,10 +29,12 @@ app.message(async ({ message, say }) => {
     if (!prompt) return;
 
     // 特定チャンネルは自動で要約（非スレッド化）
-    if (RSS_CHANNELS.includes(channel) && hasUrl(prompt)) {
-      await summarize(say, prompt, user, channel);
-      return;
-    }
+    // if (RSS_CHANNELS.includes(channel) && hasUrl(prompt)) {
+    //   await summarize(say, prompt, user, channel);
+    //   return;
+    // }
+    // NOTE: 一旦無効化
+    // TODO: チャンネルを環境変数などで管理する
 
     // 特定チャンネルは自動で要約（スレッド化）
     if (CHANNELS.includes(channel) && hasUrl(prompt)) {
