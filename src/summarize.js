@@ -10,14 +10,14 @@ exports.CHANNELS = [
   'C051TTKV5L1', // #開発-ai
   'C05RWMBNKCP', // #開発-アーキテクチャ
   'C024X97CVV2', // #雑談-ニュース
-  'C067M2VAEA0', // #rss-techblogs
-  'C067JKEE3R9', // #rss-techfeed
+  // 'C067M2VAEA0', // #rss-techblogs
+  // 'C067JKEE3R9', // #rss-techfeed
   // 'C03C0NHJBC0', // #test文屋
 ];
 // RSS_CHANNELSはスレッド化せず要約する
 exports.RSS_CHANNELS = [
-  'C067M2VAEA0', // #rss-techblogs
-  'C067JKEE3R9', // #rss-techfeed
+  // 'C067M2VAEA0', // #rss-techblogs
+  // 'C067JKEE3R9', // #rss-techfeed
   // 'C03C0NHJBC0', // #test文屋
 ];
 
