@@ -92,14 +92,20 @@ async function fetchAndExtractArticle(url) {
 
 exports.summarize = async function(say, prompt, user, channel, thread_ts = null) {
   try {
-    const isDomainIgnored = (url) => {
-      const domain = new URL(url).hostname;
-      return IGNORE_DOMAINS.includes(domain);
-    };
+
+    const isIgnored = (url) => {
+      const isDomainIgnored = (url) => {
+        const domain = new URL(url).hostname;
+        return IGNORE_DOMAINS.includes(domain);
+      };
+      const isPdfUrl = (url) => {
+        return url.endsWith('.pdf');
+      }
+      return isDomainIgnored(url) || isPdfUrl(url);
+    }
 
     const containsNonIgnoredDomain = (urls) => {
-      const test = urls.some(url => !isDomainIgnored(url));
-      return urls.some(url => !isDomainIgnored(url));
+      return urls.some(url => !isIgnored(url));
     };
 
     const urlPattern = /<(https?:\/.+)>/g;
@@ -148,7 +154,7 @@ exports.summarize = async function(say, prompt, user, channel, thread_ts = null)
     }
     for (const url of urls) {
       try {
-        if (isDomainIgnored(url)) continue;
+        if (isIgnored(url)) continue;
         await saySummary(url);
       } catch (error) {
         console.error('Error:', error);
