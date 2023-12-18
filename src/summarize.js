@@ -104,7 +104,7 @@ exports.summarize = async function(say, prompt, user, channel, thread_ts = null)
 
     const urlPattern = /<(https?:\/.+)>/g;
     const urls = Array.from(prompt.matchAll(urlPattern), m => m[1].split('|')[0]);
-    
+
     if (containsNonIgnoredDomain(urls)) {
       await say({
         text: `Ok, I'll summarize ...`,

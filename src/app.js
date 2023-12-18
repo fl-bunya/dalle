@@ -22,6 +22,10 @@ module.exports.handler = async (event, context, callback) => {
 
 const hasUrl = (text) => (typeof text == 'string') && text.match(/https?:\/\/[^\s]+/);
 
+const isAutoReply = (channel, prompt) => {
+  return CHANNELS.includes(channel) && hasUrl(prompt);
+}
+
 // 投稿検知
 app.message(async ({ message, say }) => {
   try {
@@ -37,7 +41,7 @@ app.message(async ({ message, say }) => {
     // TODO: チャンネルを環境変数などで管理する
 
     // 特定チャンネルは自動で要約（スレッド化）
-    if (CHANNELS.includes(channel) && hasUrl(prompt)) {
+    if (isAutoReply(channel, prompt)) {
       await summarize(say, prompt, user, channel, thread_ts);
       return;
     }
@@ -58,9 +62,13 @@ app.message(async ({ message, say }) => {
 // メンション
 app.event('app_mention', async ({ event, say }) => {
   try {
-    const prompt = event.text.replace(/<@.*>/, '').trim();
+    const { text, user, channel, ts: thread_ts } = event;
+    const prompt = text.replace(/<@.*>/, '').trim();
     if (!prompt) return;
-    const { user, channel, ts: thread_ts } = event;
+
+    // 特定チャンネルは自動で要約されるのでメンションには反応しない
+    if (isAutoReply(channel, prompt)) return;
+
     hasUrl(prompt)
       ? await summarize(say, prompt, user, channel, thread_ts)
       : await dalle(say, prompt, user, channel, thread_ts);
